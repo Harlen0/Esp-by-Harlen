@@ -1,0 +1,92 @@
+local function createHighlight(character)
+    local existingHighlight = character:FindFirstChild("OutlineHighlight")
+    if existingHighlight then
+        return
+    end
+
+    local highlight = Instance.new("Highlight")
+    highlight.Name = "OutlineHighlight"
+    highlight.Adornee = character
+    highlight.FillTransparency = 1
+    highlight.OutlineColor = Color3.fromRGB(255, 0, 0)
+    highlight.OutlineTransparency = 0
+    highlight.Parent = character
+end
+
+local function removeHighlight(character)
+    local highlight = character:FindFirstChild("OutlineHighlight")
+    if highlight then
+        highlight:Destroy()
+    end
+end
+
+local function updateHighlights()
+    local player = game.Players.LocalPlayer
+    local myTeam = player.Team
+
+    for _, otherPlayer in ipairs(game.Players:GetPlayers()) do
+        if otherPlayer ~= player and otherPlayer.Team ~= myTeam then
+            local character = otherPlayer.Character
+            if character and character:FindFirstChild("HumanoidRootPart") then
+                createHighlight(character)
+            end
+        else
+            local character = otherPlayer.Character
+            if character then
+                removeHighlight(character)
+            end
+        end
+    end
+end
+
+local function createNotification(text)
+    local screenGui = Instance.new("ScreenGui")
+    screenGui.Name = "NotificationGui"
+    screenGui.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
+
+    local textLabel = Instance.new("TextLabel")
+    textLabel.Size = UDim2.new(0, 300, 0, 50)
+    textLabel.Position = UDim2.new(0.5, -150, 0.9, -25)
+    textLabel.BackgroundTransparency = 0.5
+    textLabel.BackgroundColor3 = Color3.new(0, 0, 0)
+    textLabel.TextColor3 = Color3.new(1, 1, 1)
+    textLabel.TextScaled = true
+    textLabel.Text = text
+    textLabel.Parent = screenGui
+
+    delay(10, function()
+        screenGui:Destroy()
+    end)
+end
+
+game.Players.PlayerAdded:Connect(function(player)
+    player.CharacterAdded:Connect(function(character)
+        wait(1)
+        updateHighlights()
+    end)
+end)
+
+game.Players.PlayerRemoving:Connect(function(player)
+    if player.Character then
+        removeHighlight(player.Character)
+    end
+end)
+
+game:GetService("Players").PlayerAdded:Connect(function(player)
+    player.CharacterAdded:Connect(function(character)
+        local humanoid = character:WaitForChild("Humanoid")
+        humanoid.Died:Connect(function()
+            removeHighlight(character)
+        end)
+    end)
+end)
+
+local function periodicUpdate()
+    while true do
+        wait(5)
+        updateHighlights()
+    end
+end
+spawn(periodicUpdate)
+
+createNotification("Script Executado com Sucesso! By: Harlen")
